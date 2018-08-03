@@ -39,7 +39,7 @@
                 $('#server_status').text(world_name + ' is open OMG');
                 $('#server_emote').attr('src', 'https://cdn.frankerfacez.com/emoticon/210748/1');
                 if (alerted == false) {
-                    window.alert(world_name + 'is OPEN');
+                    window.alert(world_name + ' is OPEN');
                     alerted = true;
                     var cooldown = setTimeout(function () {
                         alerted = false;
@@ -47,12 +47,12 @@
                 }
             }
         });
-        socket.on('world_status', function (world_status) {
-            for (i of world_status) {
+        socket.on('world_list', function (world_list) {
+            for (i of world_list) {
                 console.log(i);
                 $('#server_list').append($('<option>', {
-                    value: i.name,
-                    text: i.name
+                    value: i,
+                    text: i
                 }));
             }
             $("#server_list").val(selection);
