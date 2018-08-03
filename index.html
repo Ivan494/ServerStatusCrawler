@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Bahamut pls</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+<script>
+    $(function () {
+        var selection = 'Bahamut'; //temp bug fix
+        var socket = io();
+        var alerted = false;
+        var interv = setInterval(function () {
+            socket.emit('server_selection', selection);
+            console.log('query ' + selection);
+        }, 1000);
+        $('#server_list').change(function () {
+            clearInterval(interv);
+            $("select option:selected").each(function () {
+                var selection = $(this).val();
+                //console.log(selection);
+                socket.emit('server_selection', selection);
+                interv = setInterval(function () {
+                    socket.emit('server_selection', selection);
+                    console.log('query ' + selection);
+                }, 1000);
+            });
+        })
+
+        socket.on('server_congested', function (world_name, congested) {
+            if (congested == true) {
+                $('#server_status').text(world_name + ' is congested PepeHands');
+                $('#server_emote').attr('src', 'https://cdn.frankerfacez.com/emoticon/231552/4');
+            } else {
+                $('#server_status').text(world_name + ' is open OMG');
+                $('#server_emote').attr('src', 'https://cdn.frankerfacez.com/emoticon/210748/1');
+                if (alerted == false) {
+                    window.alert(world_name + 'is OPEN');
+                    alerted = true;
+                    var cooldown = setTimeout(function () {
+                        alerted = false;
+                    }, 10000);
+                }
+            }
+        });
+        socket.on('world_status', function (world_status) {
+            for (i of world_status) {
+                console.log(i);
+                $('#server_list').append($('<option>', {
+                    value: i.name,
+                    text: i.name
+                }));
+            }
+            $("#server_list").val(selection);
+        });
+    });
+</script>
+
+<body>
+    <select id="server_list">
+
+    </select>
+    <h3 id="server_status"></h3>
+    <img id="server_emote" src="#" width='300px' height='300px'>
+    <br> i did this
+    <img src="https://static-cdn.jtvnw.net/jtv_user_pictures/flamingobums-profile_image-0538de5df9d8ed01-300x300.png" width="30px"
+        height="30px">
+</body>
+
+</html>
