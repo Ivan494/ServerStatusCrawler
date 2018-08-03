@@ -1,13 +1,23 @@
-
 var request = require('request');
 var cheerio = require('cheerio');
 var schedule = require('node-schedule');
+var express = require('express');
 
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-//var world_status = [];
+var OneSignal = require("onesignal-node");
+
+var myClient = new OneSignal.Client({
+    userAuthKey: 'NTQ4M2I4MDgtNWQ1YS00MWQ3LTllNmMtNmNiNGVjNTdjNTkx',
+    // note that "app" must have "appAuthKey" and "appId" keys    
+    app: {
+        appAuthKey: 'ODAxMzhjZDEtYzNmZi00YTEwLTgwZDItYmQ4Mjc3ODU2YzI0',
+        appId: 'abeb848f-8b88-44e0-bbe8-1d9afb8771d1'
+    }
+});
+
 var congested = true;
 var full_world_list = [];
 var preferred_world_list = [];
@@ -39,14 +49,13 @@ function requestServerStatus() {
             /*             console.log("Page title:  " + $('title').text());
                         console.log($('.news__detail__wrapper').text()); */
             var news_detail = $('.news__detail__wrapper').text();
-            console.log(news_detail);
+            //console.log(news_detail);
             //var world_name_index = news_detail.indexOf(world_name);
             var preferred_world_indexes = getAllIndexes(news_detail, '▼Preferred Worlds');
             var new_world_indexes = getAllIndexes(news_detail, '▼New Worlds');
             var standard_world_indexes = getAllIndexes(news_detail, '▼Standard Worlds');
             var congested_world_indexes = getAllIndexes(news_detail, '▼Congested Worlds');
             console.log('\n-----------------------------\n');
-            console.log('123');
             preferred_world_list = populateWorldList(news_detail, preferred_world_indexes);
             new_world_list = populateWorldList(news_detail, new_world_indexes);
             standard_world_list = populateWorldList(news_detail, standard_world_indexes);
@@ -61,9 +70,29 @@ function requestServerStatus() {
                 return 0;
             })
             full_world_list = temp_full_world_list;
+            checkBahamutStatus();
         }
     });
 };
+
+//Onesignal
+function checkBahamutStatus() {
+    if (congested_world_list.indexOf('Bahamut') == -1) {
+        var firstNotification = new OneSignal.Notification({
+            contents: {
+                en: "BAHAMUT IS OPEN",
+            },
+            included_segments: ["All"]
+        });
+        myClient.sendNotification(firstNotification, function (err, httpResponse, data) {
+            if (err) {
+                console.log('Something went wrong...');
+            } else {
+                console.log(data, httpResponse.statusCode);
+            }
+        });
+    }
+}
 
 function getWorldStatus(news_detail, index) {
     var world = {};
@@ -96,7 +125,6 @@ function populateWorldList(news_detail, indexes) {
             i++;
         }
     }
-    console.log(world_list);
     return world_list;
 }
 
@@ -139,9 +167,10 @@ io.on('connection', function (socket) {
     }
 });
 
-app.get('/', function (req, res) {
-    res.sendFile(__dirname + '/index.html');
-});
+/* app.get('/', function (req, res) {
+    res.sendFile(__dirname + '/client');
+}); */
+app.use(express.static(__dirname + '/public'))
 
 http.listen(3000, function () {
     console.log('Listening on *:3000');
