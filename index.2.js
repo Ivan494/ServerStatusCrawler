@@ -24,15 +24,17 @@ var preferred_world_list = [];
 var new_world_list = [];
 var standard_world_list = [];
 var congested_world_list = [];
+var alert_shown = 0;
 
 var pageToVisit = "https://na.finalfantasyxiv.com/lodestone/news/detail/80cd4583bf743600105b947d6906d0909189e479";
 //var world_name = 'Bahamut';
 
 requestServerStatus(); //run initial
 
-var j = schedule.scheduleJob('* * * * *', function () {
+var j = schedule.scheduleJob('1 * * * *', function () {
     console.log("Visiting page " + pageToVisit);
     requestServerStatus();
+    alert_shown = 0; //reset alert every hour
 });
 
 function requestServerStatus() {
@@ -43,6 +45,9 @@ function requestServerStatus() {
         }
         // Check status code (200 is HTTP OK)
         console.log("Status code: " + response.statusCode);
+        var dt = new Date();
+        var utcDate = dt.toUTCString();
+        console.log(utcDate);
         if (response.statusCode === 200) {
             // Parse the document body
             var $ = cheerio.load(body);
@@ -77,7 +82,7 @@ function requestServerStatus() {
 
 //Onesignal
 function checkBahamutStatus() {
-    if (congested_world_list.indexOf('Bahamut') == -1) {
+    if (congested_world_list.indexOf('Bahamut') == -1 && alert_shown == 0) {
         var firstNotification = new OneSignal.Notification({
             contents: {
                 en: "BAHAMUT IS OPEN",
@@ -89,6 +94,7 @@ function checkBahamutStatus() {
                 console.log('Something went wrong...');
             } else {
                 console.log(data, httpResponse.statusCode);
+                alert_shown = 1;
             }
         });
     }
